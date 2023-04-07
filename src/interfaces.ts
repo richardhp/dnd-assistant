@@ -11,10 +11,13 @@ export interface IUserInterface {
 }
 
 export interface ICommandHandler {
-  addPlayer(data: Player): Promise<null | string>;
+  addPlayer(data: Player): Promise<null | Error>;
 }
 
 export interface IStorage {
-  init(): Promise<null | string>;
-  addPlayer(data: Player): Promise<null | string>;
+  init(): Promise<null | Error>;
+  // READ
+  getPlayers(): Promise<Array<Player> | Error>;
+  // UPSERT
+  addPlayer(data: Player): Promise<null | Error>;
 }

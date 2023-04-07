@@ -24,28 +24,32 @@ export class FileStorage implements IStorage {
     try {
       const text = Deno.readTextFileSync(`./data/state.json`);
       this._state = JSON.parse(text);
-    } catch(_e) {}
-    return Promise.resolve(null);
+      return Promise.resolve(null);
+    } catch(e) {
+      return Promise.resolve(e);
+    }
   }
 
   /**
    * 
    * @returns 
    */
-  private _saveState(): Promise<null> {
+  private _saveState(): Promise<null | Error> {
     try {
       Deno.writeTextFileSync(`./data/state.json`, JSON.stringify(this._state), { 
         create: true,
       });
-    } catch (_e) {}
-    return Promise.resolve(null);
+      return Promise.resolve(null);
+    } catch (e) {
+      return Promise.resolve(e);  
+    }
   }
 
   /**
    * 
    * @returns 
    */
-  async init(): Promise<string | null> {
+  async init(): Promise<null | Error> {
     this._loadState();
     this._saveState();
     return Promise.resolve(null);
@@ -55,8 +59,15 @@ export class FileStorage implements IStorage {
    * 
    * @param data 
    */
-  async addPlayer(data: Player): Promise<string | null> {
+  async addPlayer(data: Player): Promise<null | Error> {
     this._state.players.push(data);
     return this._saveState();
+  }
+
+  /**
+   * 
+   */
+  getPlayers(): Promise<Array<Player> | Error> {
+    return Promise.resolve(this._state.players);
   }
 }

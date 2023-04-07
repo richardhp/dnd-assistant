@@ -1,6 +1,6 @@
 import { inject, singleton } from 'https://esm.sh/tsyringe@4.7.0?target=deno';
 import { ICommandHandler, IUserInterface, InjectNames } from './interfaces.ts';
-import { Command, commands } from "./types.ts";
+import { Command, commands } from './types.ts ';
 
 export type PromptRuleType = `array` | `number` | `string`;
 
@@ -24,23 +24,29 @@ function getNextCommand(): Command {
 @singleton()
 export class Prompt implements IUserInterface {
 
-  constructor(@inject(InjectNames.COMMAND_HANDLER) private _commandHandler: ICommandHandler) {}
+  constructor(@inject(InjectNames.COMMAND_HANDLER) private _commandHandler: ICommandHandler) {
+  }
 
+  private _getPlayerStats(): { name: string, maxHp: number, dexterity: number} {
+    const name = promptByType<string>(`Enter name`, { type: `string` });
+    const maxHp = promptByType<number>(`Enter max HP`, { type: `number` });
+    const dexterity = promptByType<number>(`Enter dexterity`, { type: `number` });
+    return { name, maxHp, dexterity };
+  }
   async start(): Promise<null> {
-    
+    console.clear();
     while(true) {
       switch(getNextCommand()) {
         case `add_player`: {
-          const name = promptByType<string>(`What is the player called`, { type: `string` });
-          const maxHp = promptByType<number>(`What is the max HP`, { type: `number` });
-          const dexterity = promptByType<number>(`What is the dexterity`, { type: `number` });
+          const stats = this._getPlayerStats();
 
-          this._commandHandler.addPlayer({
-            name: name,
-            currentHp: maxHp,
-            maxHp: maxHp,
-            dexterity: dexterity,
+          const result = await this._commandHandler.addPlayer({
+            ...stats,
+            currentHp: stats.maxHp,
           });
+          if (result instanceof Error) {
+            console.log(result.message);
+          }
         }
         break;
         case `start_combat`: {
