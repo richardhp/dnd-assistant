@@ -1,40 +1,19 @@
-import { promptByType } from './prompt.ts';
-import { loadState, saveState } from './storage.ts';
-import { Command, commands } from "./types.ts";
-
-let state = loadState();
-saveState(state);
-
-/**
- * 
- * @returns 
- */
-function getNextCommand(): Command {
-  return promptByType<Command>(`Enter next command`, {
-    type: `array`,
-    arg: commands,
-  })
-}
+import "https://deno.land/x/reflect_metadata@v0.1.12/mod.ts";
+import { container } from "https://esm.sh/tsyringe@4.7.0?target=deno";
+import { CommandHandler } from './command-handler.ts';
+import { ICommandHandler, IStorage, IUserInterface, InjectNames } from './interfaces.ts';
+import { FileStorage } from './storage.ts';
+import { Prompt } from "./prompt.ts";
 
 
 if (import.meta.main) {
-  while(true) {
-    switch(getNextCommand()) {
-      case `add_player`: {
-        const name = promptByType<string>(`What is the player called`, { type: `string` });
-        const maxHp = promptByType<number>(`What is the max HP`, { type: `number` });
-        const dexterity = promptByType<number>(`What is the dexterity`, { type: `number` });
+  // Register dependencies
+  const storage = new FileStorage();
+  storage.init();
+  container.register<IStorage>(InjectNames.STORAGE, { useValue: storage });
+  container.register<ICommandHandler>(InjectNames.COMMAND_HANDLER, { useClass: CommandHandler });
+  container.register<IUserInterface>(InjectNames.USER_INTERFACE, { useClass: Prompt });
+  
+  container.resolve<IUserInterface>(InjectNames.USER_INTERFACE).start();
 
-        state.players.push({
-          name: name,
-          currentHp: maxHp,
-          maxHp: maxHp,
-          dexterity: dexterity,
-        });
-        saveState(state);
-      }
-      
-      break;
-    }
-  }
 }
