@@ -1,30 +1,60 @@
 import { inject, singleton } from 'https://esm.sh/tsyringe@4.7.0?target=deno';
 import { ICommandHandler, IUserInterface, InjectNames } from './interfaces.ts';
-import { Command, commands } from './types.ts ';
+import Stack from "npm:ts-data.stack";
+import { PlayerState } from './types.ts';
+import { timingSafeEqual } from 'https://deno.land/std@0.177.0/crypto/timing_safe_equal.ts';
 
-export type PromptRuleType = `array` | `number` | `string`;
+const commands = [`add_player`, `start_combat`];
+type Command = typeof commands[number];
+type PromptRuleType = `array` | `number` | `string`;
 
-export type PromptRule = {
+type PromptRule = {
   type: PromptRuleType,
   arg?: any,
 }
 
-
 /**
- * 
- * @returns 
+ * Menu instances have a context for which their commands are allowed and make sense
  */
-function getNextCommand(): Command {
-  return promptByType<Command>(`Enter next command`, {
-    type: `array`,
-    arg: commands,
-  })
+interface IMenu {
+  get validCommands(): Array<string>;
+  get commandPrompt(): string;
 }
+
+class Menu implements IMenu {
+  private _validCommands: Array<string>
+  private _commandPrompt: string;
+  private _playerState: PlayerState;
+
+  constructor(
+    playerState: PlayerState,
+    commandPrompt: string,
+    validCommands: Array<string>
+  ) {
+    this._commandPrompt = commandPrompt;
+    this._playerState = playerState;
+    this._validCommands = validCommands;
+  }
+
+  get validCommands(): string[] {
+    return this._validCommands;
+  }
+  get commandPrompt(): string {
+    return this._commandPrompt;
+  }
+}
+
+
 
 @singleton()
 export class Prompt implements IUserInterface {
 
+  private _menuStack: Stack<IMenu>;
+
   constructor(@inject(InjectNames.COMMAND_HANDLER) private _commandHandler: ICommandHandler) {
+    // Setup menus
+    this._menuStack = new Stack<IMenu>();
+    this._menuStack.push(new Menu(`idle`, `Party is idle, enter command`, [`add_player`, `start_combat`]));
   }
 
   private _getPlayerStats(): { name: string, maxHp: number, dexterity: number} {
@@ -33,10 +63,22 @@ export class Prompt implements IUserInterface {
     const dexterity = promptByType<number>(`Enter dexterity`, { type: `number` });
     return { name, maxHp, dexterity };
   }
+
+  /**
+   * 
+   * @returns 
+   */
+  getNextCommand(): Command {
+    return promptByType<Command>(this._menuStack.peek().commandPrompt, {
+      type: `array`,
+      arg: commands,
+    })
+  }
+
   async start(): Promise<null> {
     console.clear();
     while(true) {
-      switch(getNextCommand()) {
+      switch(this.getNextCommand()) {
         case `add_player`: {
           const stats = this._getPlayerStats();
 
@@ -51,6 +93,7 @@ export class Prompt implements IUserInterface {
         break;
         case `start_combat`: {
           console.log(`start combat`)
+          this._menuStack.push(new Menu(`combat`, `Party in combat`, []))
         }
         break;
       }

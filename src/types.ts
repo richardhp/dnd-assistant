@@ -1,6 +1,3 @@
-export const commands = [`add_player`, `start_combat`];
-export type Command = `add_player` | `start_combat`;
-
 export type Player = {
   name: string,
   currentHp: number,
@@ -8,6 +5,17 @@ export type Player = {
   dexterity: number,
 };
 
+export type Enemy = {
+  name: string,
+  currentHp: number,
+  maxHp: number,
+  dexterity: number,
+}
+
+export type PlayerState = `idle` | `combat`;
+
 export type GameState = {
-  players: Array<Player>;
+  party: Array<Player>;
+  playerState: PlayerState,
+  enemies: null | Array<Enemy>;
 };

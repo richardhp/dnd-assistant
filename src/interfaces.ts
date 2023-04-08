@@ -12,6 +12,7 @@ export interface IUserInterface {
 
 export interface ICommandHandler {
   addPlayer(data: Player): Promise<null | Error>;
+  startCombat(enemies: Array<Enemy>): Promise<null | Error>;
 }
 
 export interface IStorage {

@@ -12,7 +12,7 @@ export class FileStorage implements IStorage {
    */
   constructor() {
     this._state = {
-      players: [],
+      party: [],
     };
   }
 
@@ -60,7 +60,7 @@ export class FileStorage implements IStorage {
    * @param data 
    */
   async addPlayer(data: Player): Promise<null | Error> {
-    this._state.players.push(data);
+    this._state.party.push(data);
     return this._saveState();
   }
 
@@ -68,6 +68,6 @@ export class FileStorage implements IStorage {
    * 
    */
   getPlayers(): Promise<Array<Player> | Error> {
-    return Promise.resolve(this._state.players);
+    return Promise.resolve(this._state.party);
   }
 }
